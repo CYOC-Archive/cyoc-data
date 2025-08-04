@@ -69,13 +69,13 @@ def extract_data_from_html(file_path):
                         tag_ids.append(int(match.group(1)))
 
             return {
-                'Filename': os.path.basename(file_path),
-                'Current Chapter ID': current_chapter_id,
+#                'Filename': os.path.basename(file_path),
+                'Chapter ID': current_chapter_id,
                 'Chapter Date': chapter_date_value,
-                'Author ID': chapter_author_id,
-                'Author': chapter_author.get_text(strip=True) if chapter_author else '',
-                'Previous Chapter Link': prev_link_href,
-                'Previous Chapter ID': prev_chapter_id,
+                'User ID': chapter_author_id,
+                'Username': chapter_author.get_text(strip=True) if chapter_author else '',
+#                'Previous Chapter Link': prev_link_href,
+                'Parent Chapter ID': prev_chapter_id,
                 'Tags': tag_ids,
                 'Chapter Title': chapter_title,
                 'Chapter Text (base64)': encoded_chapter_text
@@ -93,13 +93,13 @@ def extract_all_html_to_csv(input_folder, output_csv):
 
     with open(output_csv, mode='w', newline='', encoding='utf-8') as csvfile:
         fieldnames = [
-            'Filename',
-            'Current Chapter ID',
+#            'Filename',
+            'Chapter ID',
             'Chapter Date',
-            'Author ID',
-            'Author',
-            'Previous Chapter Link',
-            'Previous Chapter ID',
+            'User ID',
+            'Username',
+ #           'Previous Chapter Link',
+            'Parent Chapter ID',
             'Tags',
             'Chapter Title',
             'Chapter Text (base64)'
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         input_folder = sys.argv[1]
         output_csv = sys.argv[2]
     else:
-        input_folder = "input/test-data"
+        input_folder = "input/interactives"
         output_csv = os.path.join("output", "output.csv")
 
     extract_all_html_to_csv(input_folder, output_csv)

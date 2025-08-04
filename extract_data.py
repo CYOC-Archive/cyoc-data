@@ -46,14 +46,37 @@ def extract_data_from_html(file_path):
                     if match:
                         chapter_author_id = match.group(1)
 
+            # Find the timestamp span inside chapter_date
+            chapter_date_value = ''
+            if chapter_date:
+                timestamp_span = chapter_date.find('span', class_='timestamp')
+                if timestamp_span and 'title' in timestamp_span.attrs:
+                    chapter_date_value = timestamp_span['title']
+                elif timestamp_span:
+                    chapter_date_value = timestamp_span.get_text(strip=True)
+                else:
+                    chapter_date_value = chapter_date.get_text(strip=True)
+            else:
+                chapter_date_value = ''
+
+            # Extract tag IDs from <span class="tags">
+            tag_ids = []
+            tags_span = soup.find('span', class_='tags')
+            if tags_span:
+                for a in tags_span.find_all('a', href=True):
+                    match = re.search(r'tags=(\d+)', a['href'])
+                    if match:
+                        tag_ids.append(int(match.group(1)))
+
             return {
                 'Filename': os.path.basename(file_path),
                 'Current Chapter ID': current_chapter_id,
-                'Chapter Date': chapter_date.get_text(strip=True) if chapter_date else '',
+                'Chapter Date': chapter_date_value,
                 'Author ID': chapter_author_id,
                 'Author': chapter_author.get_text(strip=True) if chapter_author else '',
                 'Previous Chapter Link': prev_link_href,
                 'Previous Chapter ID': prev_chapter_id,
+                'Tags': tag_ids,
                 'Chapter Title': chapter_title,
                 'Chapter Text (base64)': encoded_chapter_text
             }
@@ -77,6 +100,7 @@ def extract_all_html_to_csv(input_folder, output_csv):
             'Author',
             'Previous Chapter Link',
             'Previous Chapter ID',
+            'Tags',
             'Chapter Title',
             'Chapter Text (base64)'
         ]
@@ -105,7 +129,7 @@ if __name__ == "__main__":
         input_folder = sys.argv[1]
         output_csv = sys.argv[2]
     else:
-        input_folder = "input/interactives"
+        input_folder = "input/test-data"
         output_csv = os.path.join("output", "output.csv")
 
     extract_all_html_to_csv(input_folder, output_csv)

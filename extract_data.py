@@ -4,6 +4,7 @@ import sys
 import base64
 import re
 from bs4 import BeautifulSoup
+from markdownify import markdownify as md
 
 def extract_chapter_id(link):
     match = re.search(r'chapter_(\d+)\.html', link)
@@ -16,18 +17,26 @@ def extract_data_from_html(file_path):
         with open(file_path, 'r') as file:
             soup = BeautifulSoup(file, 'html.parser')
 
+
             chapter_text = soup.find('p', id='chapter-text')
             chapter_date = soup.find('span', class_='chapter-date')
             chapter_author = soup.find('span', class_='chapter-author')
             prev_link = soup.find('a', id='previouschapterlink')
             chapter_title_tag = soup.find('h2', class_='title')
 
-            # Base64 encode the HTML content of chapter_text
+            # Extract HTML from <p id='chapter-text'> up to and including the first <h3> after it, convert to Markdown, then base64 encode
+            encoded_chapter_text = ''
             if chapter_text:
-                html_content = chapter_text.decode_contents().strip()
-                encoded_chapter_text = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-            else:
-                encoded_chapter_text = ''
+                html_parts = [str(chapter_text)]
+                for sibling in chapter_text.next_siblings:
+                    if getattr(sibling, 'name', None) == 'h3':
+                        html_parts.append(str(sibling))
+                        break
+                    if getattr(sibling, 'name', None) in ['br', 'hr']:
+                        html_parts.append(str(sibling))
+                html_content = ''.join(html_parts).strip()
+                markdown_content = md(html_content)
+                encoded_chapter_text = base64.b64encode(markdown_content.encode('utf-8')).decode('utf-8')
 
             prev_link_href = prev_link['href'] if prev_link and 'href' in prev_link.attrs else ''
             prev_chapter_id = extract_chapter_id(prev_link_href)
@@ -129,7 +138,7 @@ if __name__ == "__main__":
         input_folder = sys.argv[1]
         output_csv = sys.argv[2]
     else:
-        input_folder = "input/interactives"
+        input_folder = "input/test-data"
         output_csv = os.path.join("output", "output.csv")
 
     extract_all_html_to_csv(input_folder, output_csv)
